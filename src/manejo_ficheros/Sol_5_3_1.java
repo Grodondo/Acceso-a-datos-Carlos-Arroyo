@@ -80,7 +80,7 @@ public class Sol_5_3_1 {
 		}
 	}
 	
-	public void EscribeFichero(String matricula, String marca, String anioMatriculacion) {
+	private void EscribeFichero(String matricula, String marca, String anioMatriculacion) {
 	
 		File file_xml = new File("./coches_out.xml");
 		

@@ -12,9 +12,10 @@ public class Sol_4_2_1 {
         EscribeFicheroAleatorio(ids, nombres, edades);
         
     	LeeFicheroAleatorio();
+    	//ModificarFichero(2, (short) 220);
     }
 	
-	public void ModificaFcihero(int id, short edad) {
+	public void ModificarFichero(int id, short edad) {
 		try {
 			RandomAccessFile raf = new RandomAccessFile("./prueba.dat", "rw");
 			
