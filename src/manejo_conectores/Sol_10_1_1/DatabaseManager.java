@@ -1,10 +1,12 @@
-package manejo_conectores.sol_7_1;
+package manejo_conectores.Sol_10_1_1;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.sql.Connection;
+import java.sql.Date;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -19,7 +21,7 @@ public class DatabaseManager implements AutoCloseable {
 	
 	public DatabaseManager() {
 		db = new Database();
-		Connection con = db.createConnection();
+		con = db.createConnection();
 	}
 	
 	
@@ -53,7 +55,7 @@ public class DatabaseManager implements AutoCloseable {
 			e.printStackTrace();
 		} finally {
 			try {
-				con.close();
+//				con.close();
 				st.close();
 				rs.close();
 			} catch (SQLException e) {
@@ -62,22 +64,28 @@ public class DatabaseManager implements AutoCloseable {
 		}
 	}
 	
-	public void modifyTarea (int[] ids) {
-		
+	public void modifyTarea (int[] ids) throws SQLException {
+		boolean autoCommit = true;
 		Connection con = db.createConnection();
 		Statement st = null;
 		
 		try {
 			st = con.createStatement();
+			autoCommit = con.getAutoCommit();
+			con.setAutoCommit(false);
 			for (int i = 0; i < ids.length; i++) {
 				String query = "UPDATE Tareas SET finalizada = TRUE WHERE id = " + ids[i];
 				st.executeUpdate(query);
 			}
+			con.commit();
+			con.setAutoCommit(autoCommit);
 		} catch (SQLException e) {
-			e.printStackTrace();
+			con.rollback();
+			throw e;
+			//e.printStackTrace();
 		} finally {
 			try {
-				con.close();
+//				con.close();
 				st.close();
 			} catch (SQLException e) {
 				System.err.println("Coudnt close the Statement - modifyTarea");
@@ -102,7 +110,7 @@ public class DatabaseManager implements AutoCloseable {
 			e.printStackTrace();
 		} finally {
 			try {
-				con.close();
+//				con.close();
 				st.close();
 			} catch (SQLException e) {
 				System.err.println("Coudnt close the Statement - CreateTable");
@@ -111,28 +119,47 @@ public class DatabaseManager implements AutoCloseable {
 
 	}
 
-	public void InsertData(String nameTable) {
-
+	public void InsertData(String nameTable) throws SQLException {
+		boolean autoCommit = true;
+		
 		File script = new File(db.getRouteInsertData());
 
 		Connection con = db.createConnection();
-		Statement st = null;
+		PreparedStatement st = null;
 
 		try {
-			st = con.createStatement();
+			String query = "INSERT INTO " + nameTable + " (id, descripcion, fecha_inicio, fecha_final, finalizada) VALUES (?, ?, ?, ?, ?)";
+			
+			autoCommit = con.getAutoCommit();
+			con.setAutoCommit(false);
+			st = con.prepareStatement(query);
+
 			ArrayList<String> lineas = readLines(script);
 			for (int i=0; i<lineas.size(); i++) {
-	            String query = "INSERT INTO " + nameTable + " (id, descripcion, fecha_inicio, fecha_final, finalizada) VALUES " + lineas.get(i);
-				st.executeUpdate(query);
+				if (i == 0) continue;
+			
+				String[] data = lineas.get(i).split(",");
+	
+			    st.setInt(1, Integer.parseInt(data[0].trim()));
+			    st.setString(2, (data[1].trim()));
+			    st.setString(3, (data[2].trim()));
+			    st.setString(4, (data[3].trim()));
+			    st.setBoolean(5, Boolean.parseBoolean(data[4].trim()));
+				
+				st.executeUpdate();
 			}
-
+			con.commit();
+			con.setAutoCommit(autoCommit);
 			//st.executeUpdate(script.toString());
 
 		} catch (SQLException e) {
-			e.printStackTrace();
-		} finally {
+			con.rollback();
+			throw e;
+			//e.printStackTrace();
+		} 
+		finally {
 			try {
-				con.close();
+//				con.close();
 				st.close();
 			} catch (SQLException e) {
 				System.err.println("Coudnt close the Statement - CreateDatabase");

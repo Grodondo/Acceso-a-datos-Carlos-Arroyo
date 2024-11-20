@@ -1,9 +1,10 @@
-package manejo_conectores.sol_7_1;
+package manejo_conectores.Sol_11_1;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -62,19 +63,25 @@ public class DatabaseManager implements AutoCloseable {
 		}
 	}
 	
-	public void modifyTarea (int[] ids) {
-		
+	public void modifyTarea (int[] ids) throws SQLException {
+		boolean autoCommit = true;
 		Connection con = db.createConnection();
 		Statement st = null;
 		
 		try {
 			st = con.createStatement();
+			autoCommit = con.getAutoCommit();
+			con.setAutoCommit(false);
 			for (int i = 0; i < ids.length; i++) {
 				String query = "UPDATE Tareas SET finalizada = TRUE WHERE id = " + ids[i];
 				st.executeUpdate(query);
 			}
+			con.commit();
+			con.setAutoCommit(autoCommit);
 		} catch (SQLException e) {
-			e.printStackTrace();
+			con.rollback();
+			throw e;
+			//e.printStackTrace();
 		} finally {
 			try {
 				con.close();
@@ -110,9 +117,52 @@ public class DatabaseManager implements AutoCloseable {
 		}
 
 	}
+	
+	public void modifyFinalizada (int ids[], boolean finalizada) {
+		boolean autoCommit = true;
+		Connection con = db.createConnection();
+		CallableStatement cstm = null;
+		
+        try {
+        	cstm = con.prepareCall("{call modificar_finalizadas(?, ?)}");
+        	autoCommit = con.getAutoCommit();
+        	con.setAutoCommit(false);
+        	
+        	for(int i=0; i<ids.length; i++) {
+        		cstm.setInt(1, ids[i]);
+        		cstm.setBoolean(2, finalizada);
+        		
+        		cstm.execute();
+        	}
+        	con.commit();
+		} 
+        catch (SQLException e) {
+			System.out.println("Error en la lectura de la base de datos, rollback done");
+			try {
+		        if (con != null) {
+		            con.rollback();
+		        }
+		    } catch (SQLException rollbackEx) {
+		        rollbackEx.printStackTrace();
+		    }
+        }
+        finally {
+        	try {
+        		con.setAutoCommit(autoCommit);
+        		
+        		if (cstm != null && !cstm.isClosed()) {
+            		cstm.close();
+        		}
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+        }
+  
+	}
 
-	public void InsertData(String nameTable) {
-
+	public void InsertData(String nameTable) throws SQLException {
+		boolean autoCommit = true;
+		
 		File script = new File(db.getRouteInsertData());
 
 		Connection con = db.createConnection();
@@ -120,16 +170,22 @@ public class DatabaseManager implements AutoCloseable {
 
 		try {
 			st = con.createStatement();
+			autoCommit = con.getAutoCommit();
+			con.setAutoCommit(false);
+			
 			ArrayList<String> lineas = readLines(script);
 			for (int i=0; i<lineas.size(); i++) {
 	            String query = "INSERT INTO " + nameTable + " (id, descripcion, fecha_inicio, fecha_final, finalizada) VALUES " + lineas.get(i);
 				st.executeUpdate(query);
 			}
-
+			con.commit();
+			con.setAutoCommit(autoCommit);
 			//st.executeUpdate(script.toString());
 
 		} catch (SQLException e) {
-			e.printStackTrace();
+			con.rollback();
+			throw e;
+			//e.printStackTrace();
 		} finally {
 			try {
 				con.close();
