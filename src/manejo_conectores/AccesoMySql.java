@@ -31,14 +31,6 @@ public class AccesoMySql {
 		} catch (SQLException ex) {
 			System.out.println("Error" + ex.getMessage());
 		} finally {
-			if (con != null) {
-				try {
-					con.close();
-				} catch (SQLException e) {
-					e.printStackTrace();
-				}
-			}
-
 			if (st != null) {
 				try {
 					st.close();
@@ -47,6 +39,14 @@ public class AccesoMySql {
 					e.printStackTrace();
 				}
 			}
+			if (con != null) {
+				try {
+					con.close();
+				} catch (SQLException e) {
+					e.printStackTrace();
+				}
+			}
+
 		}
 
 	}

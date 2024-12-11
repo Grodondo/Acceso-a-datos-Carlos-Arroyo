@@ -146,7 +146,7 @@ public class DatabaseManager implements AutoCloseable {
 			    st.setString(4, (data[3].trim()));
 			    st.setBoolean(5, Boolean.parseBoolean(data[4].trim()));
 				
-				st.executeUpdate();
+				st.executeUpdate();	
 			}
 			con.commit();
 			con.setAutoCommit(autoCommit);
