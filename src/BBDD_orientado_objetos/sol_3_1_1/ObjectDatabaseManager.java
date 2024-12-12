@@ -13,9 +13,9 @@ public class ObjectDatabaseManager {
 		try {
 			odb = ODBFactory.open(dbName);
 			odb.store(tarea);
-			odb.close();
+			
 		} catch (Exception e) {
-			System.out.println("Insertar tarea: " + e.getMessage());
+			System.out.println("Fallo al insertar tarea: " + e.getMessage());
 		}
 		finally {
 			if (odb != null) {
@@ -52,5 +52,10 @@ public class ObjectDatabaseManager {
         odb.close();
     }
 	
+	public void mostrarTareas() {
+		ODB odb = ODBFactory.open(dbName);
+		odb.getObjects(Tarea.class).forEach(tarea -> System.out.println(((Tarea) tarea)));
+		odb.close();
+	}
 
 }
